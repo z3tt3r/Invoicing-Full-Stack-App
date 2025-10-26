@@ -62,7 +62,7 @@ Example:
 ```bash
 cd invoice-client-starter
 npm install
-npm start
+npm run dev
 ```
 
 UI available at [`http://localhost:3000`](http://localhost:3000)
