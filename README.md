@@ -12,7 +12,7 @@ Designed as a clean example of full-stack architecture for portfolio and learnin
 | Layer | Stack | Description |
 |-------|-------|-------------|
 | **Backend** | Java 17 · Spring Boot · JPA · MySQL | REST API for managing people, invoices and statistics |
-| **Frontend** | React 18 · Bootstrap · Axios | Simple UI for listing and editing invoices |
+| **Frontend** | React 18 · Bootstrap | Simple UI for listing and editing invoices |
 | **Database** | MySQL (local) | Schema and demo data defined in SQL scripts |
 
 ---
