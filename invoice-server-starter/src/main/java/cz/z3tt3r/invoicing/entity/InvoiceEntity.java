@@ -85,4 +85,11 @@ public class InvoiceEntity {
      */
     private boolean hidden = false;
 
+    /**
+     * Application user that owns this record.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_user_id")
+    private AppUserEntity owner;
+
 }

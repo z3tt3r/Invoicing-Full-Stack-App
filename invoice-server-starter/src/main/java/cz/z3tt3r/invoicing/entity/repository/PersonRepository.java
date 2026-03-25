@@ -7,9 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository interface for managing {@link PersonEntity} data.
@@ -25,7 +27,7 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
      * @param hidden The hidden status to filter by.
      * @return A list of {@link PersonEntity} objects.
      */
-    List<PersonEntity> findByHidden(boolean hidden);
+    List<PersonEntity> findByHiddenAndOwner_Id(boolean hidden, Long ownerId);
 
     /**
      * Retrieves a paginated list of {@link PersonLookup} objects based on their hidden status.
@@ -34,7 +36,7 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
      * @param pageable The pagination information.
      * @return A page of {@link PersonLookup} objects.
      */
-    Page<PersonLookup> findByHidden(boolean hidden, Pageable pageable);
+    Page<PersonLookup> findByHiddenAndOwner_Id(boolean hidden, Long ownerId, Pageable pageable);
 
     /**
      * Finds a list of persons by their identification number.
@@ -42,14 +44,18 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
      * @param identificationNumber The identification number to search for.
      * @return A list of {@link PersonEntity} objects.
      */
-    List<PersonEntity> findByIdentificationNumber(String identificationNumber);
+    List<PersonEntity> findByIdentificationNumberAndOwner_Id(String identificationNumber, Long ownerId);
 
     /**
      * Retrieves a list of all persons that are not hidden.
      *
      * @return A list of {@link PersonLookup} objects.
      */
-    List<PersonLookup> findAllByHiddenFalse();
+    List<PersonLookup> findAllByHiddenFalseAndOwner_Id(Long ownerId);
+
+    Optional<PersonEntity> findByIdAndOwner_Id(Long id, Long ownerId);
+
+    List<PersonEntity> findAllByOwnerIsNull();
 
     /**
      * Retrieves a paginated list of person statistics, including total revenue.
@@ -62,12 +68,13 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
     @Query(value = "SELECT new cz.z3tt3r.invoicing.dto.PersonStatisticsDTO(" +
             "p.id AS personId, " +
             "p.name AS personName, " +
-            "COALESCE(SUM(sell_inv.price), 0) + COALESCE(SUM(buy_inv.price), 0) AS revenue) " +
+            "COALESCE(SUM(CASE WHEN sell_inv.hidden = FALSE THEN sell_inv.price ELSE 0 END), 0) + " +
+            "COALESCE(SUM(CASE WHEN buy_inv.hidden = FALSE THEN buy_inv.price ELSE 0 END), 0) AS revenue) " +
             "FROM person p " +
             "LEFT JOIN p.sales sell_inv " +
             "LEFT JOIN p.purchases buy_inv " +
-            "WHERE p.hidden = FALSE " +
+            "WHERE p.hidden = FALSE AND p.owner.id = :ownerId " +
             "GROUP BY p.id, p.name " +
             "ORDER BY p.id")
-    Page<PersonStatisticsDTO> getPersonRevenueStatistics(Pageable pageable);
+    Page<PersonStatisticsDTO> getPersonRevenueStatistics(@Param("ownerId") Long ownerId, Pageable pageable);
 }

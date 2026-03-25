@@ -3,6 +3,7 @@ package cz.z3tt3r.invoicing.dto.mapper;
 import cz.z3tt3r.invoicing.dto.PersonDTO;
 import cz.z3tt3r.invoicing.entity.PersonEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 /**
@@ -18,6 +19,10 @@ public interface PersonMapper {
      * @param source The DTO to convert.
      * @return The resulting {@link PersonEntity}.
      */
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "sales", ignore = true)
+    @Mapping(target = "purchases", ignore = true)
+    @Mapping(target = "hidden", ignore = true)
     PersonEntity toEntity(PersonDTO source);
 
     /**
@@ -34,5 +39,9 @@ public interface PersonMapper {
      * @param personDTO The DTO containing the updated data.
      * @param entity The target entity to update.
      */
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "sales", ignore = true)
+    @Mapping(target = "purchases", ignore = true)
+    @Mapping(target = "hidden", ignore = true)
     void updateEntityFromDto(PersonDTO personDTO, @MappingTarget PersonEntity entity);
 }

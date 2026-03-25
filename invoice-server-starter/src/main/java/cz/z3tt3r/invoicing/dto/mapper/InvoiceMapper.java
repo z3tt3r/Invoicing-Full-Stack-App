@@ -23,6 +23,8 @@ public interface InvoiceMapper {
      */
     @Mapping(target = "buyer", ignore = true)
     @Mapping(target = "seller", ignore = true)
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "hidden", ignore = true)
     InvoiceEntity toEntity(InvoiceDTO source);
 
     /**
@@ -43,6 +45,8 @@ public interface InvoiceMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "buyer", ignore = true)
     @Mapping(target = "seller", ignore = true)
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "hidden", ignore = true)
     void updateEntityFromDto(InvoiceDTO invoiceDTO, @MappingTarget InvoiceEntity entity);
 
     /**

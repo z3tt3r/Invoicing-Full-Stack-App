@@ -11,6 +11,7 @@ import javax.annotation.processing.Generated;
 public abstract class InvoiceEntity_ {
 
 	public static volatile SingularAttribute<InvoiceEntity, PersonEntity> seller;
+	public static volatile SingularAttribute<InvoiceEntity, AppUserEntity> owner;
 	public static volatile SingularAttribute<InvoiceEntity, String> note;
 	public static volatile SingularAttribute<InvoiceEntity, String> product;
 	public static volatile SingularAttribute<InvoiceEntity, Boolean> hidden;
@@ -23,6 +24,7 @@ public abstract class InvoiceEntity_ {
 	public static volatile SingularAttribute<InvoiceEntity, PersonEntity> buyer;
 
 	public static final String SELLER = "seller";
+	public static final String OWNER = "owner";
 	public static final String NOTE = "note";
 	public static final String PRODUCT = "product";
 	public static final String HIDDEN = "hidden";

@@ -43,6 +43,14 @@ spring:
     mapper:
       accept-case-insensitive-enums: true
 
+app:
+  cors:
+    allowed-origins: ${APP_FRONTEND_URL:http://localhost:5173},http://localhost:3000
+  bootstrap:
+    admin-email: ${APP_BOOTSTRAP_ADMIN_EMAIL:admin@example.com}
+    admin-password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:admin123}
+    admin-name: ${APP_BOOTSTRAP_ADMIN_NAME:Demo Admin}
+
 # PRO VÝVOJ - Logging konfigurace pro debugging
 logging:
   level:

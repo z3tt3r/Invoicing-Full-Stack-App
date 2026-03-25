@@ -4,6 +4,7 @@ import cz.z3tt3r.invoicing.constant.Countries;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
 import java.util.List;
 
 @Entity(name = "person")
@@ -98,6 +99,13 @@ public class PersonEntity {
      * Flag to indicate if the person is hidden (soft-deleted).
      */
     private boolean hidden = false;
+
+    /**
+     * Application user that owns this record.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_user_id")
+    private AppUserEntity owner;
 
     /**
      * List of invoices where this person is the seller.

@@ -4,10 +4,12 @@ import cz.z3tt3r.invoicing.dto.InvoiceDTO;
 import cz.z3tt3r.invoicing.dto.InvoiceStatisticsDTO;
 import cz.z3tt3r.invoicing.dto.InvoiceSummary;
 import cz.z3tt3r.invoicing.dto.mapper.InvoiceMapper;
+import cz.z3tt3r.invoicing.entity.AppUserEntity;
 import cz.z3tt3r.invoicing.entity.InvoiceEntity;
 import cz.z3tt3r.invoicing.entity.PersonEntity;
 import cz.z3tt3r.invoicing.entity.repository.InvoiceRepository;
 import cz.z3tt3r.invoicing.entity.repository.PersonRepository;
+import cz.z3tt3r.invoicing.security.CurrentUserService;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +31,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceMapper invoiceMapper;
     private final InvoiceRepository invoiceRepository;
     private final PersonRepository personRepository;
+    private final CurrentUserService currentUserService;
 
     /**
      * Constructs the service with required dependencies.
@@ -37,10 +40,15 @@ public class InvoiceServiceImpl implements InvoiceService {
      * @param invoiceRepository The repository for accessing invoice data.
      * @param personRepository The repository for accessing person data (buyer/seller).
      */
-    public InvoiceServiceImpl(InvoiceMapper invoiceMapper, InvoiceRepository invoiceRepository, PersonRepository personRepository) {
+    public InvoiceServiceImpl(
+            InvoiceMapper invoiceMapper,
+            InvoiceRepository invoiceRepository,
+            PersonRepository personRepository,
+            CurrentUserService currentUserService) {
         this.invoiceMapper = invoiceMapper;
         this.invoiceRepository = invoiceRepository;
         this.personRepository = personRepository;
+        this.currentUserService = currentUserService;
     }
 
     /**
@@ -54,8 +62,10 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     @Transactional
     public InvoiceDTO addInvoice(InvoiceDTO invoiceDTO) {
+        AppUserEntity currentUser = currentUserService.getCurrentUser();
         InvoiceEntity entity = invoiceMapper.toEntity(invoiceDTO);
         setBuyerAndSellerForInvoice(invoiceDTO, entity);
+        entity.setOwner(currentUser);
         entity = invoiceRepository.save(entity);
         return invoiceMapper.toDTO(entity);
     }
@@ -96,7 +106,7 @@ public class InvoiceServiceImpl implements InvoiceService {
      * @throws NotFoundException if the invoice does not exist in the database.
      */
     private InvoiceEntity fetchInvoiceById(long id) {
-        return invoiceRepository.findById(id)
+        return invoiceRepository.findByIdAndOwner_Id(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new NotFoundException("Faktura s ID " + id + " nebyla nalezena v databázi."));
     }
 
@@ -111,6 +121,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     @Transactional
     public InvoiceDTO editInvoice(long invoiceId, InvoiceDTO invoiceDTO) {
+        AppUserEntity currentUser = currentUserService.getCurrentUser();
         InvoiceEntity originalInvoice = fetchInvoiceById(invoiceId);
         originalInvoice.setHidden(true);
         invoiceRepository.save(originalInvoice);
@@ -118,6 +129,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         InvoiceEntity newInvoice = invoiceMapper.toEntity(invoiceDTO);
         newInvoice.setId(null); // Ensure a new ID is generated
         setBuyerAndSellerForInvoice(invoiceDTO, newInvoice);
+        newInvoice.setOwner(currentUser);
         newInvoice = invoiceRepository.save(newInvoice);
         return invoiceMapper.toDTO(newInvoice);
     }
@@ -131,14 +143,15 @@ public class InvoiceServiceImpl implements InvoiceService {
      */
     @Override
     public InvoiceStatisticsDTO getInvoiceStatistics() {
-        long invoicesCount = invoiceRepository.countByHidden(false);
+        Long ownerId = currentUserService.getCurrentUserId();
+        long invoicesCount = invoiceRepository.countByHiddenAndOwner_Id(false, ownerId);
 
-        BigDecimal allTimeSum = invoiceRepository.sumAllTimePricesWithoutVat();
+        BigDecimal allTimeSum = invoiceRepository.sumAllTimePricesWithoutVat(ownerId);
         if (allTimeSum == null) {
             allTimeSum = BigDecimal.ZERO;
         }
 
-        BigDecimal currentYearSum = invoiceRepository.sumCurrentYearPricesWithoutVat();
+        BigDecimal currentYearSum = invoiceRepository.sumCurrentYearPricesWithoutVat(ownerId);
         if (currentYearSum == null) {
             currentYearSum = BigDecimal.ZERO;
         }
@@ -157,17 +170,18 @@ public class InvoiceServiceImpl implements InvoiceService {
      * @throws NotFoundException if a person with the given ID is not found.
      */
     private void setBuyerAndSellerForInvoice(InvoiceDTO invoiceDTO, InvoiceEntity invoiceEntity) {
+        Long ownerId = currentUserService.getCurrentUserId();
         if (invoiceDTO.getBuyer() == null || invoiceDTO.getBuyer().getId() == null) {
             throw new IllegalArgumentException("ID odběratele musí být uvedeno.");
         }
-        PersonEntity buyer = personRepository.findById(invoiceDTO.getBuyer().getId())
+        PersonEntity buyer = personRepository.findByIdAndOwner_Id(invoiceDTO.getBuyer().getId(), ownerId)
                 .orElseThrow(() -> new NotFoundException("Odběratel s ID " + invoiceDTO.getBuyer().getId() + " nebyl nalezen."));
         invoiceEntity.setBuyer(buyer);
 
         if (invoiceDTO.getSeller() == null || invoiceDTO.getSeller().getId() == null) {
             throw new IllegalArgumentException("ID dodavatele musí být uvedeno.");
         }
-        PersonEntity seller = personRepository.findById(invoiceDTO.getSeller().getId())
+        PersonEntity seller = personRepository.findByIdAndOwner_Id(invoiceDTO.getSeller().getId(), ownerId)
                 .orElseThrow(() -> new NotFoundException("Dodavatel s ID " + invoiceDTO.getSeller().getId() + " nebyl nalezen."));
         invoiceEntity.setSeller(seller);
     }
@@ -196,15 +210,17 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Specification<InvoiceEntity> spec = Specification.where(null);
         spec = spec.and((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("hidden"), false));
+        spec = spec.and((root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("owner").get("id"), currentUserService.getCurrentUserId()));
 
         if (buyerId != null && !buyerId.trim().isEmpty()) {
-            PersonEntity buyer = personRepository.findByIdentificationNumber(buyerId).stream().findFirst()
+            PersonEntity buyer = personRepository.findByIdentificationNumberAndOwner_Id(buyerId, currentUserService.getCurrentUserId()).stream().findFirst()
                     .orElseThrow(() -> new NotFoundException("Odběratel s identifikačním číslem " + buyerId + " nebyl nalezen."));
             spec = spec.and((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("buyer"), buyer));
         }
 
         if (sellerId != null && !sellerId.trim().isEmpty()) {
-            PersonEntity seller = personRepository.findByIdentificationNumber(sellerId).stream().findFirst()
+            PersonEntity seller = personRepository.findByIdentificationNumberAndOwner_Id(sellerId, currentUserService.getCurrentUserId()).stream().findFirst()
                     .orElseThrow(() -> new NotFoundException("Dodavatel s identifikačním číslem " + sellerId + " nebyl nalezen."));
             spec = spec.and((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("seller"), seller));
         }
@@ -234,12 +250,13 @@ public class InvoiceServiceImpl implements InvoiceService {
      */
     @Override
     public Page<InvoiceDTO> getInvoicesBySellerIdentificationNumber(String identificationNumber, Pageable pageable) {
-        List<PersonEntity> sellers = personRepository.findByIdentificationNumber(identificationNumber);
+        Long ownerId = currentUserService.getCurrentUserId();
+        List<PersonEntity> sellers = personRepository.findByIdentificationNumberAndOwner_Id(identificationNumber, ownerId);
         if (sellers.isEmpty()) {
             return Page.empty(pageable);
         }
         List<Long> sellerIds = sellers.stream().map(PersonEntity::getId).collect(Collectors.toList());
-        return invoiceRepository.findBySellerIdInAndHiddenFalse(sellerIds, pageable).map(invoiceMapper::toDTO);
+        return invoiceRepository.findBySellerIdInAndHiddenFalseAndOwner_Id(sellerIds, ownerId, pageable).map(invoiceMapper::toDTO);
     }
 
     /**
@@ -251,11 +268,12 @@ public class InvoiceServiceImpl implements InvoiceService {
      */
     @Override
     public Page<InvoiceDTO> getInvoicesByBuyerIdentificationNumber(String identificationNumber, Pageable pageable) {
-        List<PersonEntity> buyers = personRepository.findByIdentificationNumber(identificationNumber);
+        Long ownerId = currentUserService.getCurrentUserId();
+        List<PersonEntity> buyers = personRepository.findByIdentificationNumberAndOwner_Id(identificationNumber, ownerId);
         if (buyers.isEmpty()) {
             return Page.empty(pageable);
         }
         List<Long> buyerIds = buyers.stream().map(PersonEntity::getId).collect(Collectors.toList());
-        return invoiceRepository.findByBuyerIdInAndHiddenFalse(buyerIds, pageable).map(invoiceMapper::toDTO);
+        return invoiceRepository.findByBuyerIdInAndHiddenFalseAndOwner_Id(buyerIds, ownerId, pageable).map(invoiceMapper::toDTO);
     }
 }

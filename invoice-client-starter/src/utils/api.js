@@ -1,32 +1,49 @@
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
-const API_URL = "http://localhost:8080";
-const fetchData = (url, requestOptions) => {
-    const apiUrl = `${API_URL}${url}`;
+let unauthorizedHandler = null;
 
-    return fetch(apiUrl, requestOptions)
-        .then((response) => {
-            if (!response.ok) {
-                // Zlepšená chybová zpráva: Zahrnuje text odpovědi pro lepší ladění
-                return response.text().then(text => {
-                    throw new Error(`Network response was not ok: ${response.status} ${response.statusText} - ${text}`);
-                });
-            }
-
-            // Pokud je status 204 No Content (běžné pro DELETE), nevracíme JSON
-            if (response.status === 204) {
-                return null;
-            }
-
-            // Jinak parsujeme JSON
-            return response.json();
-        })
-        .catch((error) => {
-            // Přeposíláme chybu dál, aby ji mohl zpracovat volající kód
-            throw error;
-        });
+export const setUnauthorizedHandler = (handler) => {
+    unauthorizedHandler = handler;
 };
 
-export const apiGet = (url, params) => {
+const fetchData = async (url, requestOptions = {}, options = {}) => {
+    const apiUrl = `${API_URL}${url}`;
+    const response = await fetch(apiUrl, {
+        credentials: "include",
+        ...requestOptions,
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    const isJsonResponse = contentType.includes("application/json");
+
+    if (!response.ok) {
+        const errorBody = isJsonResponse ? await response.json().catch(() => null) : await response.text().catch(() => "");
+        const errorMessage = typeof errorBody === "string"
+            ? errorBody
+            : errorBody?.message || errorBody?.error || response.statusText;
+
+        if (response.status === 401 && !options.skipAuthRedirect && unauthorizedHandler) {
+            unauthorizedHandler();
+        }
+
+        const error = new Error(`Network response was not ok: ${response.status} ${response.statusText}${errorMessage ? ` - ${errorMessage}` : ""}`);
+        error.status = response.status;
+        error.body = errorBody;
+        throw error;
+    }
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    if (isJsonResponse) {
+        return response.json();
+    }
+
+    return response.text();
+};
+
+export const apiGet = (url, params, options) => {
     const filteredParams = Object.fromEntries(
         Object.entries(params || {}).filter(([_, value]) => value != null)
     );
@@ -39,34 +56,33 @@ export const apiGet = (url, params) => {
         method: "GET",
     };
 
-    // Použijeme nově sestavenou finalUrl
-    return fetchData(finalUrl, requestOptions);
+    return fetchData(finalUrl, requestOptions, options);
 };
 
-export const apiPost = (url, data) => {
+export const apiPost = (url, data, options) => {
     const requestOptions = {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(data),
     };
 
-    return fetchData(url, requestOptions);
+    return fetchData(url, requestOptions, options);
 };
 
-export const apiPut = (url, data) => {
+export const apiPut = (url, data, options) => {
     const requestOptions = {
         method: "PUT",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(data),
     };
 
-    return fetchData(url, requestOptions);
+    return fetchData(url, requestOptions, options);
 };
 
-export const apiDelete = (url) => {
+export const apiDelete = (url, options) => {
     const requestOptions = {
         method: "DELETE",
     };
 
-    return fetchData(url, requestOptions);
+    return fetchData(url, requestOptions, options);
 };

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A repository for managing {@link InvoiceEntity} instances.
@@ -28,8 +29,8 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
      *
      * @return The total sum of all non-hidden invoice prices, or {@code null} if no invoices exist.
      */
-    @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE i.hidden = false", nativeQuery = true)
-    BigDecimal sumAllTimePricesWithoutVat();
+    @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE i.hidden = false AND i.owner_user_id = :ownerId", nativeQuery = true)
+    BigDecimal sumAllTimePricesWithoutVat(@Param("ownerId") Long ownerId);
 
     /**
      * Calculates the sum of all invoice prices (without VAT) for the current year.
@@ -37,8 +38,8 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
      *
      * @return The total sum of non-hidden invoice prices from the current year, or {@code null} if no invoices exist.
      */
-    @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE YEAR(i.issued) = YEAR(CURDATE()) AND i.hidden = false", nativeQuery = true)
-    BigDecimal sumCurrentYearPricesWithoutVat();
+    @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE YEAR(i.issued) = YEAR(CURDATE()) AND i.hidden = false AND i.owner_user_id = :ownerId", nativeQuery = true)
+    BigDecimal sumCurrentYearPricesWithoutVat(@Param("ownerId") Long ownerId);
 
     /**
      * Counts the total number of invoices based on their hidden status.
@@ -46,7 +47,7 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
      * @param hidden A boolean flag to count either hidden or non-hidden invoices.
      * @return The count of invoices matching the hidden status.
      */
-    long countByHidden(boolean hidden);
+    long countByHiddenAndOwner_Id(boolean hidden, Long ownerId);
 
     //region Methods prepared for deletion
     // These methods are being replaced by the JpaSpecificationExecutor and new custom queries
@@ -72,7 +73,7 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
      * @param pageable Pagination information.
      * @return A page of invoices sold by the specified person.
      */
-    Page<InvoiceEntity> findBySellerIdInAndHiddenFalse(List<Long> sellerIds, Pageable pageable);
+    Page<InvoiceEntity> findBySellerIdInAndHiddenFalseAndOwner_Id(List<Long> sellerIds, Long ownerId, Pageable pageable);
 
     /**
      * Retrieves a paginated list of all non-hidden invoices where a specific person is the buyer.
@@ -81,7 +82,13 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
      * @param pageable Pagination information.
      * @return A page of invoices purchased by the specified person.
      */
-    Page<InvoiceEntity> findByBuyerIdInAndHiddenFalse(List<Long> buyerIds, Pageable pageable);
+    Page<InvoiceEntity> findByBuyerIdInAndHiddenFalseAndOwner_Id(List<Long> buyerIds, Long ownerId, Pageable pageable);
+
+    Optional<InvoiceEntity> findByIdAndOwner_Id(Long id, Long ownerId);
+
+    List<InvoiceEntity> findAllByOwnerIsNull();
+
+    List<InvoiceEntity> findAllByOwner_Id(Long ownerId);
 
     /**
      * Retrieves a paginated and filtered list of invoice summaries.
