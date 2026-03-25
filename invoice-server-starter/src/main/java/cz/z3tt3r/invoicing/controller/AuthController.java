@@ -3,6 +3,8 @@ package cz.z3tt3r.invoicing.controller;
 import cz.z3tt3r.invoicing.dto.AuthLoginRequest;
 import cz.z3tt3r.invoicing.dto.AuthUserDTO;
 import cz.z3tt3r.invoicing.entity.AppUserEntity;
+import cz.z3tt3r.invoicing.entity.UserRole;
+import cz.z3tt3r.invoicing.entity.repository.AppUserRepository;
 import cz.z3tt3r.invoicing.security.CurrentUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,10 +28,15 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final CurrentUserService currentUserService;
+    private final AppUserRepository appUserRepository;
 
-    public AuthController(AuthenticationManager authenticationManager, CurrentUserService currentUserService) {
+    public AuthController(
+            AuthenticationManager authenticationManager,
+            CurrentUserService currentUserService,
+            AppUserRepository appUserRepository) {
         this.authenticationManager = authenticationManager;
         this.currentUserService = currentUserService;
+        this.appUserRepository = appUserRepository;
     }
 
     @PostMapping("/login")
@@ -66,6 +73,9 @@ public class AuthController {
     }
 
     private AuthUserDTO toAuthUserDto(AppUserEntity user) {
-        return new AuthUserDTO(user.getId(), user.getEmail(), user.getFullName(), user.getRole());
+        String primaryAdminEmail = appUserRepository.findFirstByRoleOrderByIdAsc(UserRole.ROLE_ADMIN)
+                .map(AppUserEntity::getEmail)
+                .orElse(null);
+        return new AuthUserDTO(user.getId(), user.getEmail(), user.getFullName(), user.getRole(), primaryAdminEmail);
     }
 }

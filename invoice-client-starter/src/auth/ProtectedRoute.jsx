@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 const ProtectedRoute = () => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, setupStatus } = useAuth();
     const location = useLocation();
 
     if (isLoading) {
@@ -14,6 +14,10 @@ const ProtectedRoute = () => {
                 </div>
             </div>
         );
+    }
+
+    if (setupStatus.setupRequired) {
+        return <Navigate to="/setup" replace />;
     }
 
     if (!isAuthenticated) {

@@ -47,9 +47,8 @@ app:
   cors:
     allowed-origins: ${APP_FRONTEND_URL:http://localhost:5173},http://localhost:3000
   bootstrap:
-    admin-email: ${APP_BOOTSTRAP_ADMIN_EMAIL:admin@example.com}
-    admin-password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:admin123}
-    admin-name: ${APP_BOOTSTRAP_ADMIN_NAME:Demo Admin}
+    demo-email: ${APP_BOOTSTRAP_DEMO_EMAIL:user@example.com}
+    demo-password: ${APP_BOOTSTRAP_DEMO_PASSWORD:password123}
 
 # PRO VÝVOJ - Logging konfigurace pro debugging
 logging:

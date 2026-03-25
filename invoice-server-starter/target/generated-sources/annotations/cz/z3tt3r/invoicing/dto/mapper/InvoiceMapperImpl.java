@@ -3,6 +3,7 @@ package cz.z3tt3r.invoicing.dto.mapper;
 import cz.z3tt3r.invoicing.dto.InvoiceDTO;
 import cz.z3tt3r.invoicing.dto.InvoiceSummary;
 import cz.z3tt3r.invoicing.dto.PersonDTO;
+import cz.z3tt3r.invoicing.entity.AppUserEntity;
 import cz.z3tt3r.invoicing.entity.InvoiceEntity;
 import cz.z3tt3r.invoicing.entity.PersonEntity;
 import java.math.BigDecimal;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    comments = "version: 1.5.3.Final, compiler: javac, environment: Java 24.0.1 (Oracle Corporation)"
+    comments = "version: 1.5.3.Final, compiler: javac, environment: Java 25.0.2 (Homebrew)"
 )
 @Component
 public class InvoiceMapperImpl implements InvoiceMapper {
@@ -49,6 +50,7 @@ public class InvoiceMapperImpl implements InvoiceMapper {
 
         InvoiceDTO invoiceDTO = new InvoiceDTO();
 
+        invoiceDTO.setOwnerId( sourceOwnerId( source ) );
         invoiceDTO.setId( source.getId() );
         invoiceDTO.setInvoiceNumber( source.getInvoiceNumber() );
         invoiceDTO.setIssued( source.getIssued() );
@@ -92,6 +94,7 @@ public class InvoiceMapperImpl implements InvoiceMapper {
         String sellerName = null;
         String buyerIdentificationNumber = null;
         String sellerIdentificationNumber = null;
+        Long ownerId = null;
         Long id = null;
         String invoiceNumber = null;
         String product = null;
@@ -102,15 +105,31 @@ public class InvoiceMapperImpl implements InvoiceMapper {
         sellerName = sourceSellerName( source );
         buyerIdentificationNumber = sourceBuyerIdentificationNumber( source );
         sellerIdentificationNumber = sourceSellerIdentificationNumber( source );
+        ownerId = sourceOwnerId( source );
         id = source.getId();
         invoiceNumber = String.valueOf( source.getInvoiceNumber() );
         product = source.getProduct();
         price = source.getPrice();
         issued = source.getIssued();
 
-        InvoiceSummary invoiceSummary = new InvoiceSummary( id, invoiceNumber, product, price, issued, buyerName, sellerName, buyerIdentificationNumber, sellerIdentificationNumber );
+        InvoiceSummary invoiceSummary = new InvoiceSummary( id, ownerId, invoiceNumber, product, price, issued, buyerName, sellerName, buyerIdentificationNumber, sellerIdentificationNumber );
 
         return invoiceSummary;
+    }
+
+    private Long sourceOwnerId(InvoiceEntity invoiceEntity) {
+        if ( invoiceEntity == null ) {
+            return null;
+        }
+        AppUserEntity owner = invoiceEntity.getOwner();
+        if ( owner == null ) {
+            return null;
+        }
+        Long id = owner.getId();
+        if ( id == null ) {
+            return null;
+        }
+        return id;
     }
 
     protected PersonDTO personEntityToPersonDTO(PersonEntity personEntity) {

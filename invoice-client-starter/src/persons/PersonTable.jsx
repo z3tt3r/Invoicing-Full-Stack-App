@@ -12,7 +12,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
  * @param {function} props.deletePerson - The callback function to delete a person.
  * @param {number} props.page - The current page number for calculating table index.
  */
-const PersonTable = ({ items, deletePerson, page }) => {
+const PersonTable = ({ items, deletePerson, page, canManagePersons, adminEmail }) => {
     const startIndex = page * 20;
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [personToDelete, setPersonToDelete] = useState(null);
@@ -94,13 +94,21 @@ const PersonTable = ({ items, deletePerson, page }) => {
                                             </Link>
                                             <Link
                                                 to={"/persons/edit/" + item.id}
-                                                className="btn btn-sm btn-light"
+                                                className={`btn btn-sm btn-light${!canManagePersons ? " disabled" : ""}`}
+                                                onClick={(event) => {
+                                                    if (!canManagePersons) {
+                                                        event.preventDefault();
+                                                    }
+                                                }}
+                                                title={!canManagePersons && adminEmail ? `Kontaktujte administrátora: ${adminEmail}` : undefined}
                                             >
                                                 Upravit
                                             </Link>
                                             <button
                                                 onClick={() => handleOpenModal(item.id)}
                                                 className="btn btn-sm btn-danger"
+                                                disabled={!canManagePersons}
+                                                title={!canManagePersons && adminEmail ? `Kontaktujte administrátora: ${adminEmail}` : undefined}
                                             >
                                                 Odstranit
                                             </button>

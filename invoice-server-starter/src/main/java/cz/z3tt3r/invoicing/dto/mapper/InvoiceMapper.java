@@ -33,6 +33,7 @@ public interface InvoiceMapper {
      * @param source The InvoiceEntity to convert.
      * @return A new InvoiceDTO instance.
      */
+    @Mapping(target = "ownerId", source = "owner.id")
     InvoiceDTO toDTO(InvoiceEntity source);
 
     /**
@@ -61,5 +62,6 @@ public interface InvoiceMapper {
     @Mapping(target = "sellerName", source = "seller.name")
     @Mapping(target = "buyerIdentificationNumber", source = "buyer.identificationNumber")
     @Mapping(target = "sellerIdentificationNumber", source = "seller.identificationNumber")
+    @Mapping(target = "ownerId", source = "owner.id")
     InvoiceSummary toSummary(InvoiceEntity source);
 }

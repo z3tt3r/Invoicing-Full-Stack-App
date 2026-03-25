@@ -32,6 +32,9 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
     @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE i.hidden = false AND i.owner_user_id = :ownerId", nativeQuery = true)
     BigDecimal sumAllTimePricesWithoutVat(@Param("ownerId") Long ownerId);
 
+    @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE i.hidden = false", nativeQuery = true)
+    BigDecimal sumAllTimePricesWithoutVat();
+
     /**
      * Calculates the sum of all invoice prices (without VAT) for the current year.
      * The query only considers invoices that are not hidden and were issued in the current year.
@@ -41,6 +44,9 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
     @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE YEAR(i.issued) = YEAR(CURDATE()) AND i.hidden = false AND i.owner_user_id = :ownerId", nativeQuery = true)
     BigDecimal sumCurrentYearPricesWithoutVat(@Param("ownerId") Long ownerId);
 
+    @Query(value = "SELECT SUM(i.price) FROM invoice i WHERE YEAR(i.issued) = YEAR(CURDATE()) AND i.hidden = false", nativeQuery = true)
+    BigDecimal sumCurrentYearPricesWithoutVat();
+
     /**
      * Counts the total number of invoices based on their hidden status.
      *
@@ -48,6 +54,8 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
      * @return The count of invoices matching the hidden status.
      */
     long countByHiddenAndOwner_Id(boolean hidden, Long ownerId);
+
+    long countByHidden(boolean hidden);
 
     //region Methods prepared for deletion
     // These methods are being replaced by the JpaSpecificationExecutor and new custom queries
@@ -85,6 +93,8 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long>, J
     Page<InvoiceEntity> findByBuyerIdInAndHiddenFalseAndOwner_Id(List<Long> buyerIds, Long ownerId, Pageable pageable);
 
     Optional<InvoiceEntity> findByIdAndOwner_Id(Long id, Long ownerId);
+
+    Optional<InvoiceEntity> findByIdAndHiddenFalse(Long id);
 
     List<InvoiceEntity> findAllByOwnerIsNull();
 

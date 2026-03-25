@@ -27,7 +27,7 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
      * @param hidden The hidden status to filter by.
      * @return A list of {@link PersonEntity} objects.
      */
-    List<PersonEntity> findByHiddenAndOwner_Id(boolean hidden, Long ownerId);
+    List<PersonEntity> findByHidden(boolean hidden);
 
     /**
      * Retrieves a paginated list of {@link PersonLookup} objects based on their hidden status.
@@ -36,7 +36,7 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
      * @param pageable The pagination information.
      * @return A page of {@link PersonLookup} objects.
      */
-    Page<PersonLookup> findByHiddenAndOwner_Id(boolean hidden, Long ownerId, Pageable pageable);
+    Page<PersonLookup> findByHidden(boolean hidden, Pageable pageable);
 
     /**
      * Finds a list of persons by their identification number.
@@ -44,16 +44,16 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
      * @param identificationNumber The identification number to search for.
      * @return A list of {@link PersonEntity} objects.
      */
-    List<PersonEntity> findByIdentificationNumberAndOwner_Id(String identificationNumber, Long ownerId);
+    List<PersonEntity> findByIdentificationNumber(String identificationNumber);
 
     /**
      * Retrieves a list of all persons that are not hidden.
      *
      * @return A list of {@link PersonLookup} objects.
      */
-    List<PersonLookup> findAllByHiddenFalseAndOwner_Id(Long ownerId);
+    List<PersonLookup> findAllByHiddenFalse();
 
-    Optional<PersonEntity> findByIdAndOwner_Id(Long id, Long ownerId);
+    Optional<PersonEntity> findByIdAndHiddenFalse(Long id);
 
     List<PersonEntity> findAllByOwnerIsNull();
 
@@ -73,8 +73,8 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long> {
             "FROM person p " +
             "LEFT JOIN p.sales sell_inv " +
             "LEFT JOIN p.purchases buy_inv " +
-            "WHERE p.hidden = FALSE AND p.owner.id = :ownerId " +
+            "WHERE p.hidden = FALSE " +
             "GROUP BY p.id, p.name " +
             "ORDER BY p.id")
-    Page<PersonStatisticsDTO> getPersonRevenueStatistics(@Param("ownerId") Long ownerId, Pageable pageable);
+    Page<PersonStatisticsDTO> getPersonRevenueStatistics(Pageable pageable);
 }

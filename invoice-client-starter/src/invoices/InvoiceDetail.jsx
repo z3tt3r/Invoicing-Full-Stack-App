@@ -4,12 +4,14 @@ import { apiGet, apiDelete } from "../utils/api";
 import dateStringFormatter from "../utils/dateStringFormatter";
 import { formatPrice } from "../utils/currencyNumberFormatter";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { useAuth } from "../auth/AuthContext";
 
 /**
  * A React component that displays the detailed information of a single invoice.
  * It fetches the invoice data based on the ID in the URL and allows for editing or deleting it.
  */
 const InvoiceDetail = () => {
+    const { currentUser } = useAuth();
     // Get invoice ID from URL parameters and the navigation hook for redirection.
     const { id } = useParams();
     const navigate = useNavigate();
@@ -19,6 +21,7 @@ const InvoiceDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false); // State for modal visibility.
+    const canManageInvoice = currentUser?.role === "ROLE_ADMIN" || invoice.ownerId === currentUser?.id;
 
     /**
      * Fetches invoice details from the API based on the ID from the URL.
@@ -179,10 +182,20 @@ const InvoiceDetail = () => {
                 <div className="card-footer bg-white border-0 d-flex justify-content-between">
                     <div>
                         <Link to="/invoices" className="btn btn-secondary me-2">Zpět</Link>
-                        <Link to={`/invoices/edit/${invoice.id}`} className="btn btn-warning">Upravit</Link>
+                        <Link
+                            to={`/invoices/edit/${invoice.id}`}
+                            className={`btn btn-warning${!canManageInvoice ? " disabled" : ""}`}
+                            onClick={(event) => {
+                                if (!canManageInvoice) {
+                                    event.preventDefault();
+                                }
+                            }}
+                        >
+                            Upravit
+                        </Link>
                     </div>
                     <div>
-                        <button onClick={handleOpenModal} className="btn btn-danger">Smazat</button>
+                        <button onClick={handleOpenModal} className="btn btn-danger" disabled={!canManageInvoice}>Smazat</button>
                     </div>
                 </div>
             </div>

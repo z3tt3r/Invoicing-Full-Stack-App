@@ -1,15 +1,19 @@
 import React, { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import FlashMessage from "../components/FlashMessage";
 import { useAuth } from "./AuthContext";
 
 const LoginPage = () => {
-    const { currentUser, login, isLoading } = useAuth();
+    const { currentUser, login, isLoading, setupStatus } = useAuth();
     const location = useLocation();
-    const [email, setEmail] = useState("admin@example.com");
-    const [password, setPassword] = useState("admin123");
-    const [error, setError] = useState(null);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState(location.state?.flashMessage || null);
     const [submitting, setSubmitting] = useState(false);
+
+    if (!isLoading && setupStatus.setupRequired) {
+        return <Navigate to="/setup" replace />;
+    }
 
     if (!isLoading && currentUser) {
         const destination = location.state?.from?.pathname || "/persons";
@@ -37,10 +41,21 @@ const LoginPage = () => {
                 <div className="card-body p-4">
                     <h1 className="h3 mb-2 text-center">Přihlášení</h1>
                     <p className="text-muted text-center mb-4">
-                        Pro demo účet můžete použít předvyplněné údaje.
+                        Přihlaste se svým účtem.
+                    </p>
+                    <p className="text-muted text-center small">
+                        Nemáte přístup? Kontaktujte administrátora{setupStatus.primaryAdminEmail ? `: ${setupStatus.primaryAdminEmail}` : "."}
+                    </p>
+                    <p className="text-center small">
+                        Pokud je aplikace nová a zatím nemá administrátora, použijte <Link to="/setup">úvodní nastavení</Link>.
                     </p>
 
-                    {error && <FlashMessage theme="danger" text={error} />}
+                    {error && (
+                        <FlashMessage
+                            theme={typeof error === "string" ? "danger" : error.theme}
+                            text={typeof error === "string" ? error : error.text}
+                        />
+                    )}
 
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">

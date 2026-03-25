@@ -14,7 +14,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
  * @param {function} props.deleteInvoice - The callback function to delete an invoice.
  * @param {number} props.page - The current page number for calculating table index.
  */
-const InvoiceTable = ({ label, items, deleteInvoice, page }) => {
+const InvoiceTable = ({ label, items, deleteInvoice, page, canManageInvoice }) => {
     const startIndex = page * 20;
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -87,8 +87,24 @@ const InvoiceTable = ({ label, items, deleteInvoice, page }) => {
                                     <td className="text-center align-middle">
                                         <div className="btn-group border">
                                             <Link to={"/invoices/show/" + item.id} className="btn btn-sm btn-secondary">Zobrazit</Link>
-                                            <Link to={"/invoices/edit/" + item.id} className="btn btn-sm btn-light">Upravit</Link>
-                                            <button onClick={() => handleOpenModal(item.id)} className="btn btn-sm btn-danger">Odstranit</button>
+                                            <Link
+                                                to={"/invoices/edit/" + item.id}
+                                                className={`btn btn-sm btn-light${canManageInvoice && !canManageInvoice(item) ? " disabled" : ""}`}
+                                                onClick={(event) => {
+                                                    if (canManageInvoice && !canManageInvoice(item)) {
+                                                        event.preventDefault();
+                                                    }
+                                                }}
+                                            >
+                                                Upravit
+                                            </Link>
+                                            <button
+                                                onClick={() => handleOpenModal(item.id)}
+                                                className="btn btn-sm btn-danger"
+                                                disabled={canManageInvoice && !canManageInvoice(item)}
+                                            >
+                                                Odstranit
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>

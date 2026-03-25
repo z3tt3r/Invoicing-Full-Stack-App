@@ -5,12 +5,14 @@ import InvoiceTable from "./InvoiceTable";
 import Pagination from "../components/Pagination";
 import FlashMessage from "../components/FlashMessage";
 import InvoiceFilter from "./InvoiceFilter";
+import { useAuth } from "../auth/AuthContext";
 
 /**
  * A component for displaying a list of invoices with filtering and pagination.
  * It fetches data from the API, handles invoice deletion, and manages component state.
  */
 const InvoiceIndex = () => {
+    const { currentUser } = useAuth();
     const [invoices, setInvoices] = useState([]);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -80,6 +82,7 @@ const InvoiceIndex = () => {
     const processInvoiceData = (invoiceData) => {
         return {
             id: invoiceData.id,
+            ownerId: invoiceData.ownerId,
             invoiceNumber: invoiceData.invoiceNumber,
             product: invoiceData.product,
             price: invoiceData.price, 
@@ -176,6 +179,7 @@ const InvoiceIndex = () => {
     }, [page, filterParams, identificationNumber, location.pathname]);
     
     const isIcFilterActive = !!identificationNumber;
+    const canManageInvoice = (invoice) => currentUser?.role === "ROLE_ADMIN" || invoice.ownerId === currentUser?.id;
 
     return (
         <div className="card shadow-sm mt-4">
@@ -214,6 +218,7 @@ const InvoiceIndex = () => {
                                     deleteInvoice={deleteInvoice}
                                     items={invoices}
                                     page={page}
+                                    canManageInvoice={canManageInvoice}
                                 />
                                 <Link to="/invoices/create" className="btn btn-success mb-3">
                                     Vytvořit fakturu

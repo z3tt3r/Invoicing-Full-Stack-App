@@ -4,12 +4,14 @@ import PersonTable from "./PersonTable";
 import Pagination from "../components/Pagination";
 import { Link, useLocation } from "react-router-dom";
 import FlashMessage from "../components/FlashMessage";
+import { useAuth } from "../auth/AuthContext";
 
 /**
  * A React component that displays a list of persons with pagination.
  * It now fetches a lightweight PersonLookup object from the API to optimize performance.
  */
 const PersonIndex = () => {
+    const { currentUser } = useAuth();
     const [persons, setPersons] = useState([]);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -19,6 +21,7 @@ const PersonIndex = () => {
 
     const location = useLocation();
     const [flashMessage, setFlashMessage] = useState(location.state?.flashMessage || null);
+    const isAdmin = currentUser?.role === "ROLE_ADMIN";
 
     /**
      * Clears the flash message from the navigation state.
@@ -108,6 +111,11 @@ const PersonIndex = () => {
                         <Link to={"/persons/create"} className="btn btn-success mb-3">
                             Vytvořit osobu
                         </Link>
+                        {!isAdmin && currentUser?.primaryAdminEmail && (
+                            <div className="alert alert-info">
+                                Osoby mohou vytvářet všichni uživatelé. Úpravy a mazání provádí administrátor: {currentUser.primaryAdminEmail}
+                            </div>
+                        )}
                         {persons.length > 0 ? (
                             <>
                                 <p className="text-muted small mb-2">Počet osob: {totalElements}</p>
@@ -115,6 +123,8 @@ const PersonIndex = () => {
                                     deletePerson={deletePerson}
                                     items={persons}
                                     page={page}
+                                    canManagePersons={isAdmin}
+                                    adminEmail={currentUser?.primaryAdminEmail}
                                 />
                                 <Link to={"/persons/create"} className="btn btn-success mb-3">
                                     Vytvořit osobu

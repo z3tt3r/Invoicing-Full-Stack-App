@@ -7,7 +7,6 @@ import cz.z3tt3r.invoicing.dto.mapper.PersonMapper;
 import cz.z3tt3r.invoicing.entity.AppUserEntity;
 import cz.z3tt3r.invoicing.entity.PersonEntity;
 import cz.z3tt3r.invoicing.entity.PersonLookup;
-import cz.z3tt3r.invoicing.entity.repository.InvoiceRepository;
 import cz.z3tt3r.invoicing.entity.repository.PersonRepository;
 import cz.z3tt3r.invoicing.security.CurrentUserService;
 import jakarta.transaction.Transactional;
@@ -21,7 +20,6 @@ import org.webjars.NotFoundException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Service implementation for managing persons.
@@ -32,17 +30,14 @@ public class PersonServiceImpl implements PersonService {
 
     private final PersonMapper personMapper;
     private final PersonRepository personRepository;
-    private final InvoiceRepository invoiceRepository;
     private final CurrentUserService currentUserService;
 
     public PersonServiceImpl(
             PersonMapper personMapper,
             PersonRepository personRepository,
-            InvoiceRepository invoiceRepository,
             CurrentUserService currentUserService) {
         this.personMapper = personMapper;
         this.personRepository = personRepository;
-        this.invoiceRepository = invoiceRepository;
         this.currentUserService = currentUserService;
     }
 
@@ -80,8 +75,7 @@ public class PersonServiceImpl implements PersonService {
      * @return The {@link PersonEntity}.
      */
     private PersonEntity fetchPersonById(long id) {
-        Long ownerId = currentUserService.getCurrentUserId();
-        return personRepository.findByIdAndOwner_Id(id, ownerId)
+        return personRepository.findByIdAndHiddenFalse(id)
                 .orElseThrow(() -> new NotFoundException("Osoba s ID " + id + " nebyla nalezena v databázi."));
     }
 
@@ -135,7 +129,7 @@ public class PersonServiceImpl implements PersonService {
      */
     @Override
     public Page<PersonStatisticsDTO> getPersonStatistics(Pageable pageable) {
-        return personRepository.getPersonRevenueStatistics(currentUserService.getCurrentUserId(), pageable);
+        return personRepository.getPersonRevenueStatistics(pageable);
     }
 
     /**
@@ -147,10 +141,9 @@ public class PersonServiceImpl implements PersonService {
      */
     @Override
     public Page<PersonLookup> getPersonsLookup(String identificationNumber, Pageable pageable) {
-        Long ownerId = currentUserService.getCurrentUserId();
         // If identificationNumber is provided, filter by it
         if (identificationNumber != null && !identificationNumber.trim().isEmpty()) {
-            List<PersonEntity> persons = personRepository.findByIdentificationNumberAndOwner_Id(identificationNumber, ownerId);
+            List<PersonEntity> persons = personRepository.findByIdentificationNumber(identificationNumber);
             // Filter out hidden persons and convert to PersonLookup
             List<PersonLookup> lookups = persons.stream()
                     .filter(person -> !person.isHidden())
@@ -184,7 +177,7 @@ public class PersonServiceImpl implements PersonService {
         }
         
         // Otherwise, return all non-hidden persons
-        return personRepository.findByHiddenAndOwner_Id(false, ownerId, pageable);
+        return personRepository.findByHidden(false, pageable);
     }
 
     /**
@@ -194,7 +187,7 @@ public class PersonServiceImpl implements PersonService {
      */
     @Override
     public List<PersonLookup> getAllPersonsLookup() {
-        return personRepository.findAllByHiddenFalseAndOwner_Id(currentUserService.getCurrentUserId());
+        return personRepository.findAllByHiddenFalse();
     }
 
     /**
@@ -204,7 +197,7 @@ public class PersonServiceImpl implements PersonService {
      */
     @Override
     public PersonLookup getPersonLookupById(Long id) {
-        return personRepository.findByIdAndOwner_Id(id, currentUserService.getCurrentUserId())
+        return personRepository.findByIdAndHiddenFalse(id)
                 .map(person -> new PersonLookup() {
                     @Override
                     public Long getId() {
@@ -231,8 +224,7 @@ public class PersonServiceImpl implements PersonService {
      */
     @Override
     public List<PersonFilterDTO> getInvoiceRelatedPersons() {
-        return invoiceRepository.findAllByOwner_Id(currentUserService.getCurrentUserId()).stream()
-                .flatMap(invoice -> Stream.of(invoice.getBuyer(), invoice.getSeller()))
+        return personRepository.findByHidden(false).stream()
                 .filter(person -> person != null && person.getIdentificationNumber() != null)
                 .map(person -> new PersonFilterDTO(person.getIdentificationNumber(), person.getName()))
                 .distinct()

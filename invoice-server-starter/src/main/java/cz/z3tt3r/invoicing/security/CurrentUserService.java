@@ -1,6 +1,7 @@
 package cz.z3tt3r.invoicing.security;
 
 import cz.z3tt3r.invoicing.entity.AppUserEntity;
+import cz.z3tt3r.invoicing.entity.UserRole;
 import cz.z3tt3r.invoicing.entity.repository.AppUserRepository;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,5 +32,9 @@ public class CurrentUserService {
 
     public Long getCurrentUserId() {
         return getCurrentUser().getId();
+    }
+
+    public boolean isAdmin() {
+        return getCurrentUser().getRole() == UserRole.ROLE_ADMIN;
     }
 }

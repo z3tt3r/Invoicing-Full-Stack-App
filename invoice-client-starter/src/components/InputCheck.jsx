@@ -21,6 +21,7 @@ export function InputCheck(props) {
           value={props.value}
           checked={checked}
           onChange={props.handleChange}
+          disabled={props.disabled}
         />{" "}
         {props.label}
       </label>

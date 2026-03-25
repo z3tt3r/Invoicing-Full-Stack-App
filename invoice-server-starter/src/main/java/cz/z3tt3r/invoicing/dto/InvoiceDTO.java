@@ -25,6 +25,8 @@ public class InvoiceDTO {
     @JsonProperty("id")
     private Long id;
 
+    private Long ownerId;
+
     /**
      * The unique invoice number.
      */

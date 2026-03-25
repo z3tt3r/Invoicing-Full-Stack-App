@@ -4,6 +4,7 @@ import {apiGet, apiPost, apiPut} from "../utils/api";
 import InputField from "../components/InputField";
 import InputCheck from "../components/InputCheck";
 import Country from "./Country";
+import { useAuth } from "../auth/AuthContext";
 
 /**
  * A React component for a form to create or edit a person.
@@ -11,6 +12,7 @@ import Country from "./Country";
  * @returns {JSX.Element} The PersonForm component.
  */
 const PersonForm = () => {
+    const { currentUser } = useAuth();
     const navigate = useNavigate();
     const {id} = useParams();
 
@@ -51,6 +53,8 @@ const PersonForm = () => {
     const [validationError, setValidationError] = useState("");
 
     const isEdit = !!id;
+    const isAdmin = currentUser?.role === "ROLE_ADMIN";
+    const isReadOnlyEdit = isEdit && !isAdmin;
 
     /**
      * Fetches person data from the API when in edit mode.
@@ -142,78 +146,96 @@ const PersonForm = () => {
                     <h1 className="h4 card-title mb-0">{isEdit ? "Upravit" : "Vytvořit"} osobu</h1>
                 </div>
                 <div className="card-body bg-white">
+                    {isReadOnlyEdit && (
+                        <div className="alert alert-info">
+                            Úpravy osob provádí administrátor. Kontaktujte prosím: {currentUser?.primaryAdminEmail || "administrátora"}.
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit}>
                         <InputField
                             required={true} type="text" name="name" label="Jméno" prompt="Zadejte celé jméno"
                             value={person.name || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="identificationNumber" label="IČO" prompt="Zadejte IČO"
                             value={person.identificationNumber || ""}
                             handleChange={handleChange}
-                            readOnly={isEdit}
+                            readOnly={isEdit || isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="taxNumber" label="DIČ" prompt="Zadejte DIČ"
                             value={person.taxNumber || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="accountNumber" label="Číslo bankovního účtu" prompt="Zadejte číslo bankovního účtu"
                             value={person.accountNumber || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="bankCode" label="Kód banky" prompt="Zadejte kód banky"
                             value={person.bankCode || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="iban" label="IBAN" prompt="Zadejte IBAN"
                             value={person.iban || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="telephone" label="Telefon" prompt="Zadejte Telefon"
                             value={person.telephone || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="mail" label="Mail" prompt="Zadejte mail"
                             value={person.mail || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="street" label="Ulice" prompt="Zadejte ulici"
                             value={person.street || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="zip" label="PSČ" prompt="Zadejte PSČ"
                             value={person.zip || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             required={true} type="text" name="city" label="Město" prompt="Zadejte město"
                             value={person.city || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <InputField
                             type="text" name="note" label="Poznámka" prompt="Doplňující poznámka"
                             value={person.note || ""}
                             handleChange={handleChange}
+                            readOnly={isReadOnlyEdit}
                         />
                         <h6>Země:</h6>
                         <InputCheck
                             type="radio" name="country" label="Česká republika" value={Country.CZECHIA}
                             handleChange={handleChange}
                             checked={person.country === Country.CZECHIA}
+                            disabled={isReadOnlyEdit}
                         />
                         <InputCheck
                             type="radio" name="country" label="Slovensko" value={Country.SLOVAKIA}
                             handleChange={handleChange}
                             checked={person.country === Country.SLOVAKIA}
+                            disabled={isReadOnlyEdit}
                         />
                         
                         {/* Show validation error, if any */}
@@ -223,7 +245,11 @@ const PersonForm = () => {
                             </div>
                         )}
                         <div className="d-flex justify-content-end mt-4">
-                            <input type="submit" className="btn btn-primary" value="Uložit"/>
+                            {!isReadOnlyEdit ? (
+                                <input type="submit" className="btn btn-primary" value="Uložit"/>
+                            ) : (
+                                <button type="button" className="btn btn-secondary" onClick={() => navigate(`/persons/show/${id}`)}>Zpět na detail</button>
+                            )}
                         </div>
                     </form>
                 </div>

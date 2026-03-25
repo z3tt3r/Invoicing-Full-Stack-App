@@ -79,6 +79,16 @@ export const apiPut = (url, data, options) => {
     return fetchData(url, requestOptions, options);
 };
 
+export const apiPatch = (url, data, options) => {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data),
+    };
+
+    return fetchData(url, requestOptions, options);
+};
+
 export const apiDelete = (url, options) => {
     const requestOptions = {
         method: "DELETE",

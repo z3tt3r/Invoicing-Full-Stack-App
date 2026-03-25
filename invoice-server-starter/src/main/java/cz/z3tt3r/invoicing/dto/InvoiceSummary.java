@@ -15,6 +15,7 @@ import java.time.LocalDate;
  * perfect for a read-only projection used by methods like {@code getFilteredInvoiceSummaries}.
  *
  * @param id The unique identifier of the invoice.
+ * @param ownerId The ID of the user who created the invoice.
  * @param invoiceNumber The invoice number.
  * @param product A description of the product or service.
  * @param price The price of the product or service.
@@ -26,6 +27,7 @@ import java.time.LocalDate;
  */
 public record InvoiceSummary(
         Long id,
+        Long ownerId,
         String invoiceNumber,
         String product,
         BigDecimal price,

@@ -19,9 +19,16 @@ import StatisticsIndex from "./statistics/StatisticsIndex";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import LoginPage from "./auth/LoginPage";
+import AdminRoute from "./auth/AdminRoute";
+import SetupPage from "./auth/SetupPage";
+import ChangePasswordPage from "./account/ChangePasswordPage";
+import UserManagementPage from "./users/UserManagementPage";
+import UserFormPage from "./users/UserFormPage";
+import UserPasswordPage from "./users/UserPasswordPage";
 
 function AppLayout() {
     const { currentUser, logout } = useAuth();
+    const isAdmin = currentUser?.role === "ROLE_ADMIN";
 
     return (
         <div className="bg-light min-vh-100">
@@ -43,11 +50,25 @@ function AppLayout() {
                                     Faktury
                                 </Link>
                             </li>
+                            {isAdmin && (
+                                <li className="nav-item">
+                                    <Link to={"/statistics"} className="nav-link">
+                                        Statistiky
+                                    </Link>
+                                </li>
+                            )}
                             <li className="nav-item">
-                                <Link to={"/statistics"} className="nav-link">
-                                    Statistiky
+                                <Link to={"/account/password"} className="nav-link">
+                                    Změnit heslo
                                 </Link>
                             </li>
+                            {isAdmin && (
+                                <li className="nav-item">
+                                    <Link to={"/admin/users"} className="nav-link">
+                                        Správa uživatelů
+                                    </Link>
+                                </li>
+                            )}
                         </ul>
                         <div className="d-flex align-items-center gap-3">
                             <span className="text-muted small">
@@ -69,10 +90,14 @@ function AppLayout() {
 }
 
 function HomeRedirect() {
-    const { currentUser, isLoading } = useAuth();
+    const { currentUser, isLoading, setupStatus } = useAuth();
 
     if (isLoading) {
         return null;
+    }
+
+    if (setupStatus.setupRequired) {
+        return <Navigate to="/setup" replace />;
     }
 
     return <Navigate to={currentUser ? "/persons" : "/login"} replace />;
@@ -84,6 +109,7 @@ export function App() {
             <AuthProvider>
                 <Routes>
                     <Route index element={<HomeRedirect />} />
+                    <Route path="/setup" element={<SetupPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route element={<ProtectedRoute />}>
                         <Route element={<AppLayout />}>
@@ -101,8 +127,17 @@ export function App() {
                                 <Route path="by-seller/:identificationNumber" element={<InvoiceIndex />} />
                                 <Route path="by-buyer/:identificationNumber" element={<InvoiceIndex />} />
                             </Route>
-                            <Route path="/statistics">
-                                <Route index element={<StatisticsIndex />} />
+                            <Route path="/account/password" element={<ChangePasswordPage />} />
+                            <Route element={<AdminRoute />}>
+                                <Route path="/statistics">
+                                    <Route index element={<StatisticsIndex />} />
+                                </Route>
+                                <Route path="/admin/users">
+                                    <Route index element={<UserManagementPage />} />
+                                    <Route path="new" element={<UserFormPage />} />
+                                    <Route path=":id/edit" element={<UserFormPage />} />
+                                    <Route path=":id/password" element={<UserPasswordPage />} />
+                                </Route>
                             </Route>
                         </Route>
                     </Route>

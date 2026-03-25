@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { apiGet, apiDelete } from "../utils/api";
 import ConfirmationModal from "../components/ConfirmationModal"; // Import the new component
+import { useAuth } from "../auth/AuthContext";
 
 /**
  * Enum for country codes.
@@ -20,9 +21,11 @@ const Country = {
  * @returns {JSX.Element} The rendered PersonDetail component.
  */
 const PersonDetail = () => {
+    const { currentUser } = useAuth();
     // Get person ID from URL parameters and navigation hook for redirection.
     const { id } = useParams();
     const navigate = useNavigate();
+    const isAdmin = currentUser?.role === "ROLE_ADMIN";
 
     // States for storing person data, loading status, errors, and confirmation dialog visibility.
     const [person, setPerson] = useState({});
@@ -171,12 +174,27 @@ const PersonDetail = () => {
                         </div>
 
                         {/* Action buttons for editing and deleting the person. */}
+                        {!isAdmin && currentUser?.primaryAdminEmail && (
+                            <div className="alert alert-info">
+                                Úpravy osoby provádí administrátor. Kontakt: {currentUser.primaryAdminEmail}
+                            </div>
+                        )}
                         <div className="d-flex justify-content-between">
                             <div>
                                 <Link to="/persons" className="btn btn-secondary me-2">Zpět</Link>
-                                <Link to={`/persons/edit/${person.id}`} className="btn btn-warning">Upravit</Link>
+                                <Link
+                                    to={`/persons/edit/${person.id}`}
+                                    className={`btn btn-warning${!isAdmin ? " disabled" : ""}`}
+                                    onClick={(event) => {
+                                        if (!isAdmin) {
+                                            event.preventDefault();
+                                        }
+                                    }}
+                                >
+                                    Upravit
+                                </Link>
                             </div>
-                            <button onClick={handleOpenModal} className="btn btn-danger">Smazat</button>
+                            <button onClick={handleOpenModal} className="btn btn-danger" disabled={!isAdmin}>Smazat</button>
                         </div>
                     </div>
                 )}

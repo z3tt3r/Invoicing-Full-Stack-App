@@ -6,10 +6,9 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class AuthUserDTO {
+public class UserDTO {
     private Long id;
     private String email;
     private String fullName;
     private UserRole role;
-    private String primaryAdminEmail;
 }

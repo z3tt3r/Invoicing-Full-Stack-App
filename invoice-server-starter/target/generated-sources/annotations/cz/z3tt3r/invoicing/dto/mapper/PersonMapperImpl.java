@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    comments = "version: 1.5.3.Final, compiler: javac, environment: Java 24.0.1 (Oracle Corporation)"
+    comments = "version: 1.5.3.Final, compiler: javac, environment: Java 25.0.2 (Homebrew)"
 )
 @Component
 public class PersonMapperImpl implements PersonMapper {
