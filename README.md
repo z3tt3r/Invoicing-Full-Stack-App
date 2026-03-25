@@ -4,7 +4,7 @@ Modern full-stack invoicing application built with Spring Boot and React.
 
 This project started as a CRUD invoicing app and now includes session-based authentication, role-based access control, first-run admin bootstrap, and scoped access to invoices and statistics.
 
-> Screenshot placeholder: overview / login screen
+![Overview](./docs/screens/Overview.png)
 
 ## Overview
 
@@ -227,31 +227,29 @@ There are currently no automated frontend tests in the repository.
 
 ## Screenshots
 
-Replace the placeholders below once the updated UI captures are ready.
+### Login
 
-### Screenshot Placeholder: Login
+![Login](./docs/screens/Login.png)
 
-> Add updated login screenshot here.
+### First-Run Setup
 
-### Screenshot Placeholder: First-Run Setup
+![First-Run Setup](./docs/screens/FirstRunSetup.png)
 
-> Add updated first-run setup screenshot here.
+### Persons
 
-### Screenshot Placeholder: Persons
+![Persons](./docs/screens/Person-delete2.png)
 
-> Add updated persons screen screenshot here.
+### Invoices
 
-### Screenshot Placeholder: Invoices
+![Invoice List](./docs/screens/Invoices2.png)
 
-> Add updated invoices screen screenshot here.
+### Admin User Management
 
-### Screenshot Placeholder: Admin User Management
+![Admin User Management](./docs/screens/AdminUserManagement.png)
 
-> Add updated admin user management screenshot here.
+### Statistics
 
-### Screenshot Placeholder: Statistics
-
-> Add updated statistics screenshot here.
+![Statistics](./docs/screens/Statistics2.png)
 
 ## License
 
