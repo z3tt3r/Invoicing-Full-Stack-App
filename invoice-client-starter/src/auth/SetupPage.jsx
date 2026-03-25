@@ -59,10 +59,6 @@ const SetupPage = () => {
                     <p className="text-muted text-center">
                         V databázi zatím neexistuje žádný uživatel. Vytvořte prvního administrátora.
                     </p>
-                    <p className="text-muted small">
-                        Dummy příklad pro lokální test: {setupStatus.demoEmail || "user@example.com"} / {setupStatus.demoPassword || "password123"}
-                    </p>
-
                     {message && <FlashMessage theme={message.theme} text={message.text} />}
 
                     {completed ? (
